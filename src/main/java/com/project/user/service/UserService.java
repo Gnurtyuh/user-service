@@ -1,14 +1,15 @@
 package com.project.user.service;
 
-import com.project.user.repository.UserRepository;
-import lombok.AccessLevel;
-import lombok.experimental.FieldDefaults;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 
-@Service
-@FieldDefaults(level = AccessLevel.PRIVATE)
-public class UserService {
-    @Autowired
-    UserRepository userRepository;
+import com.project.user.dto.request.UserRequest;
+import com.project.user.dto.response.UserResponse;
+import com.project.user.entity.Users;
+
+import java.util.List;
+import java.util.Optional;
+
+public interface UserService {
+    List<UserResponse> findAllUsers();
+    Optional<UserResponse> findUserById(long id);
+    Users registerUser(UserRequest userRequest);
 }

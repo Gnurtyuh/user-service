@@ -11,12 +11,6 @@ import java.util.Optional;
 
 @Service
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class RoleService {
-    @Autowired
-    RoleRepository roleRepository;
-
-    public Optional<String> getRoleNameByRoleId(long roleId) {
-        return roleRepository.findById(roleId)
-                .map(Roles::getRoleName);
-    }
+public interface RoleService {
+    Optional<String> getRoleNameByRoleId(long roleId);
 }

@@ -4,6 +4,7 @@ import com.project.user.dto.request.UserRequest;
 import com.project.user.dto.response.UserResponse;
 import com.project.user.entity.Users;
 import com.project.user.service.RoleService;
+import org.mapstruct.Context;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
@@ -15,10 +16,10 @@ public interface UserMapper {
 
     Users toEntity(UserRequest userRequest);
     @Mapping(source = "roleId", target = "roleName", qualifiedByName = "roleIdToRoleName")
-    UserResponse toResponse(Users users,RoleService roleService);
+    UserResponse toResponse(Users users,@Context RoleService roleService);
 
     @Named("roleIdToRoleName")
-    default String roleIdToRoleName(Long roleId , RoleService roleService) {
+    default String roleIdToRoleName(Long roleId , @Context RoleService roleService) {
         return roleService.getRoleNameByRoleId(roleId).orElse("UNKNOWN");
     }
 }
