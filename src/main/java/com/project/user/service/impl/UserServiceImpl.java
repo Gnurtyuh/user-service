@@ -12,7 +12,6 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,17 +25,16 @@ public class UserServiceImpl implements UserService {
     @Autowired
     RoleService roleService;
     @Override
-    public Users registerUser(UserRequest userRequest){
-        return userRepository.save(userMapper.toEntity(userRequest));
+    public UserResponse registerUser(UserRequest userRequest){
+        Users user = userRepository.save(userMapper.toEntity(userRequest));
+        return userMapper.toResponse(user,roleService);
     }
     @Override
     public List<UserResponse> findAllUsers() {
-        List<Users> users = userRepository.findAll();
-        List<UserResponse> userResponseList = new ArrayList<>();
-        for (Users user : users) {
-            userResponseList.add(userMapper.toResponse(user,roleService));
-        }
-        return userResponseList;
+        return  userRepository.findAll()
+                .stream()
+                .map(user -> userMapper.toResponse(user,roleService))
+                .toList();
     }
 
     @Override
@@ -44,4 +42,6 @@ public class UserServiceImpl implements UserService {
         return userRepository.findUserByUserId(userId)
                 .map(user -> userMapper.toResponse(user,roleService));
     }
+
+
 }

@@ -11,5 +11,5 @@ import java.util.Optional;
 public interface UserService {
     List<UserResponse> findAllUsers();
     Optional<UserResponse> findUserById(long id);
-    Users registerUser(UserRequest userRequest);
+    UserResponse registerUser(UserRequest userRequest);
 }
