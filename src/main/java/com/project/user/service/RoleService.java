@@ -9,8 +9,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
-@Service
-@FieldDefaults(level = AccessLevel.PRIVATE)
+
 public interface RoleService {
     Optional<String> getRoleNameByRoleId(long roleId);
 }

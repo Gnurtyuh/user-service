@@ -11,15 +11,10 @@ import org.mapstruct.Named;
 
 import java.util.Optional;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = RoleMapperHelper.class)
 public interface UserMapper {
 
     Users toEntity(UserRequest userRequest);
     @Mapping(source = "roleId", target = "roleName", qualifiedByName = "roleIdToRoleName")
-    UserResponse toResponse(Users users,@Context RoleService roleService);
-
-    @Named("roleIdToRoleName")
-    default String roleIdToRoleName(Long roleId , @Context RoleService roleService) {
-        return roleService.getRoleNameByRoleId(roleId).orElse("UNKNOWN");
-    }
+    UserResponse toResponse(Users users);
 }

@@ -27,21 +27,26 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserResponse registerUser(UserRequest userRequest){
         Users user = userRepository.save(userMapper.toEntity(userRequest));
-        return userMapper.toResponse(user,roleService);
+        return userMapper.toResponse(user);
     }
     @Override
     public List<UserResponse> findAllUsers() {
         return  userRepository.findAll()
                 .stream()
-                .map(user -> userMapper.toResponse(user,roleService))
+                .map(user -> userMapper.toResponse(user))
                 .toList();
     }
 
     @Override
     public Optional<UserResponse> findUserById(long userId){
         return userRepository.findUserByUserId(userId)
-                .map(user -> userMapper.toResponse(user,roleService));
+                .map(user -> userMapper.toResponse(user));
     }
-
-
+    @Override
+    public Users findUserByUsername(String username) {
+        return userRepository.findUserByUsername(username);    }
+    @Override
+    public Users findUserByEmail(String email) {
+        return userRepository.findUserByEmail(email);
+    }
 }

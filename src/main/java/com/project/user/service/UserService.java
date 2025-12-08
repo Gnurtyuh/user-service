@@ -12,4 +12,6 @@ public interface UserService {
     List<UserResponse> findAllUsers();
     Optional<UserResponse> findUserById(long id);
     UserResponse registerUser(UserRequest userRequest);
+    Users findUserByEmail(String email);
+    Users findUserByUsername(String username);
 }
