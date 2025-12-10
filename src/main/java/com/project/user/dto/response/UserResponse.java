@@ -14,6 +14,7 @@ public class UserResponse {
     String email;
     String fullName;
     String roleName;
+    Double balance;
     Timestamp createdDate;
     Timestamp updatedDate;
 }

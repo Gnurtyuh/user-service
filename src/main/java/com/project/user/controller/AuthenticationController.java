@@ -1,6 +1,7 @@
 package com.project.user.controller;
 
 
+import com.nimbusds.jose.JOSEException;
 import com.project.user.dto.request.AuthenticationRequest;
 import com.project.user.dto.request.IntrospectRequest;
 import com.project.user.dto.response.AuthenticationResponse;
@@ -27,7 +28,7 @@ public class AuthenticationController {
         return ResponseEntity.ok(result);
     }
     @PostMapping("/introspect")
-    public ResponseEntity<IntrospectResponse> valid(@RequestBody IntrospectRequest introspectRequest) {
+    public ResponseEntity<IntrospectResponse> valid(@RequestBody IntrospectRequest introspectRequest) throws JOSEException {
         var result = authenticationService.introspect(introspectRequest);
         return ResponseEntity.ok(result);
     }

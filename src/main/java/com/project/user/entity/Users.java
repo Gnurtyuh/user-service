@@ -25,6 +25,8 @@ public class Users {
     String password;
     @Column(name = "full_name")
     String fullName;
+    @Column(name= "balance")
+    Double amount;
     @Column(name = "role_id")
     int roleId;
     @Column(name = "created_at", insertable = false, updatable = false)
