@@ -48,7 +48,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         boolean authenticated = passwordEncoder.matches(request.getPassword(), user.getPassword());
         if(!authenticated) throw new UsernameNotFoundException("email or password incorrect");
 
-        var token = generateToken(userMapper.toResponse(user));
+        var token = generateAccessToken(userMapper.toResponse(user));
 
         return AuthenticationResponse.builder()
                 .token(token)
@@ -71,8 +71,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         }
 
     }
-    String generateToken(UserResponse userResponse){
-        JWSHeader jwsHeader = new JWSHeader(JWSAlgorithm.HS256);
+    String generateAccessToken(UserResponse userResponse){
+        JWSHeader jwsHeader = new JWSHeader(JWSAlgorithm.HS512);
 
         JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
                 .subject(userResponse.getUsername())
@@ -80,7 +80,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .issueTime(new Date())
                 .expirationTime(new Date(Instant.now().plus(1, ChronoUnit.HOURS).toEpochMilli()))
                 .claim("userId", userResponse.getUserId())
-                .claim("roleId", userResponse.getUserId())
+                .claim("roleName", userResponse.getRoleName())
                 .build();
         Payload payload = new Payload(jwtClaimsSet.toJSONObject());
         JWSObject jwsObject = new JWSObject(jwsHeader, payload);
