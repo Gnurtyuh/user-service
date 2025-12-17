@@ -65,6 +65,7 @@ public class JwtServiceImpl implements JwtService {
                 .expirationTime(new Date(Instant.now().plus(5, ChronoUnit.MINUTES).toEpochMilli()))
                 .claim("userId", userResponse.getUserId())
                 .claim("roleName", userResponse.getRoleName())
+                .claim("type", "access")
                 .build();
         Payload payload = new Payload(jwtClaimsSet.toJSONObject());
         JWSObject jwsObject = new JWSObject(jwsHeader, payload);
@@ -75,10 +76,12 @@ public class JwtServiceImpl implements JwtService {
             throw new RuntimeException(e);
         }
     }
+    @Override
     public JwtInfo parse(String token) throws ParseException {
         SignedJWT signedJWT = SignedJWT.parse(token);
         return JwtInfo.builder()
                 .jti(signedJWT.getJWTClaimsSet().getJWTID())
+                .userId(signedJWT.getJWTClaimsSet().getLongClaim("userId"))
                 .issueTime(signedJWT.getJWTClaimsSet().getIssueTime())
                 .expireTime(signedJWT.getJWTClaimsSet().getExpirationTime())
                 .build();

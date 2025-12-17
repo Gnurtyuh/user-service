@@ -5,6 +5,7 @@ import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+import com.project.user.dto.JwtInfo;
 import com.project.user.dto.TokenPayload;
 import com.project.user.dto.request.AuthenticationRequest;
 import com.project.user.dto.request.IntrospectRequest;
@@ -18,6 +19,8 @@ import com.project.user.repository.RedisTokenRepository;
 import com.project.user.repository.UserRepository;
 import com.project.user.service.AuthenticationService;
 import com.project.user.service.JwtService;
+import com.project.user.service.RedisTokenService;
+import com.project.user.service.UserService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -42,8 +45,7 @@ import java.util.concurrent.TimeUnit;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @RequiredArgsConstructor
 public class AuthenticationServiceImpl implements AuthenticationService {
-    @Autowired
-    UserRepository userRepository;
+
     @Autowired
     UserMapper userMapper;
     @Autowired
@@ -53,19 +55,22 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @Value("${jwt.signerKey}")
     protected String signKey;
     @Autowired
-    RedisTokenRepository  redisTokenRepository;
+    RedisTokenService  redisTokenService;
+    @Autowired
+    UserService userService;
+
     @Override
     public AuthenticationResponse authenticate(AuthenticationRequest request){
         PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(12);
-        var user = userRepository.findUserByEmail(request.getEmail());
+        var user = userService.findUserByEmail(request.getEmail());
         boolean authenticated = passwordEncoder.matches(request.getPassword(), user.getPassword());
         if(!authenticated) throw new UsernameNotFoundException("email or password incorrect");
 
         var token = jwtService.generateAccessToken(userMapper.toResponse(user));
 
         TokenPayload refreshToken = jwtService.generateRefreshToken(userMapper.toResponse(user));
-        redisTokenRepository.save(RedisToken.builder()
-                .jwtId(refreshToken.getToken())
+        redisTokenService.createRedisToken(RedisToken.builder()
+                .jwtId(refreshToken.getJti())
                 .expireTime(refreshToken.getExpireTime().getTime())
                 .build());
 
@@ -89,5 +94,34 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         }catch (JOSEException | ParseException e  ) {
             throw new RuntimeException("JWT verification failed");
         }
+    }
+    @Override
+    public void logout(String refreshToken) throws ParseException {
+        JwtInfo jwtInfo =jwtService.parse(refreshToken);
+        redisTokenService.deleteByJti(jwtInfo.getJti());
+    }
+    @Override
+    public AuthenticationResponse refreshToken(String refreshToken) throws ParseException {
+        JwtInfo jwtInfo = jwtService.parse(refreshToken);
+        String jti  = jwtInfo.getJti();
+        Long userId = jwtInfo.getUserId();
+        RedisToken redisToken = redisTokenService.getRedisToken(jti);
+        if (redisToken == null) throw new UsernameNotFoundException("Refresh token revoked or expired ");
+
+        redisTokenService.deleteByJti(jti);
+
+        UserResponse userResponse = userService.findUserById(userId).orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+        String accessToken = jwtService.generateAccessToken(userResponse);
+        TokenPayload refreshTokenPayload = jwtService.generateRefreshToken(userResponse);
+        redisTokenService.createRedisToken(RedisToken.builder()
+                .jwtId(refreshTokenPayload.getJti())
+                .expireTime(refreshTokenPayload.getExpireTime().getTime())
+                .build());
+
+        return AuthenticationResponse.builder()
+                .token(accessToken)
+                .refreshToken(refreshTokenPayload.getToken())
+                .build();
     }
 }

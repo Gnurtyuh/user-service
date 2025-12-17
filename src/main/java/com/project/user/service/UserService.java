@@ -10,7 +10,7 @@ import java.util.Optional;
 
 public interface UserService {
     List<UserResponse> findAllUsers();
-    Optional<UserResponse> findUserById(long id);
+    Optional<UserResponse> findUserById(long userId);
     UserResponse registerUser(UserRequest userRequest);
     Users findUserByEmail(String email);
     Users findUserByUsername(String username);
