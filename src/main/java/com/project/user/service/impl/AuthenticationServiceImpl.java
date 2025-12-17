@@ -5,20 +5,26 @@ import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+import com.project.user.dto.TokenPayload;
 import com.project.user.dto.request.AuthenticationRequest;
 import com.project.user.dto.request.IntrospectRequest;
 import com.project.user.dto.response.AuthenticationResponse;
 import com.project.user.dto.response.IntrospectResponse;
 import com.project.user.dto.response.UserResponse;
+import com.project.user.entity.RedisToken;
 import com.project.user.entity.Users;
 import com.project.user.mapper.UserMapper;
+import com.project.user.repository.RedisTokenRepository;
 import com.project.user.repository.UserRepository;
 import com.project.user.service.AuthenticationService;
+import com.project.user.service.JwtService;
 import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -29,18 +35,25 @@ import java.text.ParseException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@RequiredArgsConstructor
 public class AuthenticationServiceImpl implements AuthenticationService {
     @Autowired
     UserRepository userRepository;
     @Autowired
     UserMapper userMapper;
+    @Autowired
+    JwtService jwtService;
     @NonFinal
 
     @Value("${jwt.signerKey}")
     protected String signKey;
+    @Autowired
+    RedisTokenRepository  redisTokenRepository;
     @Override
     public AuthenticationResponse authenticate(AuthenticationRequest request){
         PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(12);
@@ -48,10 +61,17 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         boolean authenticated = passwordEncoder.matches(request.getPassword(), user.getPassword());
         if(!authenticated) throw new UsernameNotFoundException("email or password incorrect");
 
-        var token = generateAccessToken(userMapper.toResponse(user));
+        var token = jwtService.generateAccessToken(userMapper.toResponse(user));
+
+        TokenPayload refreshToken = jwtService.generateRefreshToken(userMapper.toResponse(user));
+        redisTokenRepository.save(RedisToken.builder()
+                .jwtId(refreshToken.getToken())
+                .expireTime(refreshToken.getExpireTime().getTime())
+                .build());
 
         return AuthenticationResponse.builder()
                 .token(token)
+                .refreshToken(refreshToken.getToken())
                 .build();
     }
     public IntrospectResponse introspect(IntrospectRequest request)  {
@@ -68,27 +88,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                     .build();
         }catch (JOSEException | ParseException e  ) {
             throw new RuntimeException("JWT verification failed");
-        }
-
-    }
-    String generateAccessToken(UserResponse userResponse){
-        JWSHeader jwsHeader = new JWSHeader(JWSAlgorithm.HS512);
-
-        JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
-                .subject(userResponse.getUsername())
-                .issuer(userResponse.getUsername())
-                .issueTime(new Date())
-                .expirationTime(new Date(Instant.now().plus(1, ChronoUnit.HOURS).toEpochMilli()))
-                .claim("userId", userResponse.getUserId())
-                .claim("roleName", userResponse.getRoleName())
-                .build();
-        Payload payload = new Payload(jwtClaimsSet.toJSONObject());
-        JWSObject jwsObject = new JWSObject(jwsHeader, payload);
-        try{
-            jwsObject.sign(new MACSigner(signKey));
-            return jwsObject.serialize();
-        } catch (JOSEException e) {
-            throw new RuntimeException(e);
         }
     }
 }
