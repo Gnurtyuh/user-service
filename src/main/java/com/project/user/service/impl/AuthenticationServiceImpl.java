@@ -53,7 +53,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @NonFinal
 
     @Value("${jwt.signerKey}")
-    protected String signKey;
+    String signKey;
     @Autowired
     RedisTokenService  redisTokenService;
     @Autowired

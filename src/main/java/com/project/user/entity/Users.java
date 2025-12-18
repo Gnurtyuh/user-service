@@ -26,7 +26,7 @@ public class Users {
     @Column(name = "full_name")
     String fullName;
     @Column(name= "balance")
-    Double amount;
+    Double balance;
     @Column(name = "role_id")
     int roleId;
     @Column(name = "created_at", insertable = false, updatable = false)
