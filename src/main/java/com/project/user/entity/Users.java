@@ -3,7 +3,9 @@ package com.project.user.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
 import java.sql.Timestamp;
@@ -12,6 +14,8 @@ import java.sql.Timestamp;
 @Data
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Table(name ="users")
+@NoArgsConstructor
+@AllArgsConstructor
 public class Users {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
